@@ -2,7 +2,6 @@ import requests
 from bs4 import BeautifulSoup
 import json
 import uuid
-import os
 
 def scrape_HTML(url):
     response = requests.get(url)
@@ -40,7 +39,7 @@ def parse_to_json(soup, conversation_id):
         return conversation_data
 
     # Try to extract the question and answer from the JSON-LD format
-    # (I want tou stress that we nearly never get into this format, but there are cases where we get it, so this is precautionary)
+    # (I want to stress that we nearly never get into this format, but there are cases where we get it, so this is precautionary)
     json_ld_tag = soup.find("script", {"type": "application/ld+json"})
     if json_ld_tag is not None:
         # If the page has the JSON-LD format, parse the JSON data
@@ -71,7 +70,16 @@ def parse_to_json(soup, conversation_id):
 # Create an empty list to store all conversation data and soup
 all_conversations = []
 soups = []
-n = int(input("Kaç adet soru-cevap çekmek istersiniz: "))
+while True:
+    try:
+        n = int(input("Kaç adet soru-cevap çekmek istersiniz: "))
+        if n <= 0:
+            raise ValueError
+        break
+    except ValueError:
+        print("Lütfen geçerli bir sayı girin (0 < soru-cevap sayısı)")
+
+
 for i in range(n):
     print("scraping HTML num ", i+1)
     soups.append(scrape_HTML('https://sorularlaislamiyet.com/rastgele-soru-ac'))
@@ -91,6 +99,12 @@ for i, soup in enumerate(soups):
 
     # Append the conversation data to the list
     all_conversations.append(conversation_data)
+
+# Use dumps() method to serialize JSON object to a string
+json_str = json.dumps(all_conversations, ensure_ascii=False, indent=4)
+
+# Print the formatted JSON string
+print(json_str)
 
 # Save all the conversation data to a JSON file
 with open("conversation_data.json", "w", encoding="utf-8") as f:
